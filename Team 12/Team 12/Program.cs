@@ -38,6 +38,7 @@ builder.Services.AddControllers().AddJsonOptions(x =>
 
 // Register email service
 builder.Services.AddTransient<IEmailService, EmailService>();
+
 builder.Services.AddHangfire(config =>
     config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
           .UseSimpleAssemblyNameTypeSerializer()

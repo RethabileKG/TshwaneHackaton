@@ -1,5 +1,5 @@
-﻿using System.Net.Mail;
-using System.Net;
+﻿using System.Net;
+using System.Net.Mail;
 
 namespace Team_12.Services
 {
@@ -9,9 +9,7 @@ namespace Team_12.Services
         Task SendPasswordResetEmail(string toEmail, string token);
         Task SendRegistrationConfirmationEmail(string toEmail);
         Task SendTaskReassignmentEmail(string toEmail, string taskName, string reassignedBy);
-
         Task SendGenericEmail(string toEmail, string subject, string body);
-
     }
 
     public class EmailService : IEmailService
@@ -23,113 +21,77 @@ namespace Team_12.Services
             _configuration = configuration;
         }
 
-        public async Task SendVerificationEmail(string toEmail, string code)
+        private SmtpClient GetSmtpClient()
         {
-            var smtpClient = new SmtpClient(_configuration["EmailSettings:SMTPServer"])
-            {
-                Port = int.Parse(_configuration["EmailSettings:Port"]),
-                Credentials = new NetworkCredential(_configuration["EmailSettings:Login"], _configuration["EmailSettings:Password"]),
-                EnableSsl = true,
-            };
+            var smtpServer = _configuration["SmtpSettings:Server"];
+            var smtpPort = _configuration["SmtpSettings:Port"];
+            var username = _configuration["SmtpSettings:Username"];
+            var password = _configuration["SmtpSettings:Password"];
+            var enableSsl = bool.Parse(_configuration["SmtpSettings:EnableSsl"]);
 
+            if (string.IsNullOrEmpty(smtpPort))
+            {
+                throw new ArgumentNullException("SMTP port cannot be null");
+            }
+
+            int port = int.Parse(smtpPort);
+
+            return new SmtpClient(smtpServer)
+            {
+                Port = port,
+                Credentials = new NetworkCredential(username, password),
+                EnableSsl = enableSsl,
+            };
+        }
+
+        private MailMessage CreateMailMessage(string toEmail, string subject, string body)
+        {
+            var fromEmail = _configuration["SmtpSettings:From"];
             var mailMessage = new MailMessage
             {
-                From = new MailAddress(_configuration["EmailSettings:FromEmail"]),
-                Subject = "Your Verification Code",
-                Body = $"Your verification code is {code}",
-                IsBodyHtml = true,
+                From = new MailAddress(fromEmail),
+                Subject = subject,
+                Body = body,
+                IsBodyHtml = true
             };
+
             mailMessage.To.Add(toEmail);
 
+            return mailMessage;
+        }
+
+        public async Task SendVerificationEmail(string toEmail, string code)
+        {
+            var smtpClient = GetSmtpClient();
+            var mailMessage = CreateMailMessage(toEmail, "Your Verification Code", $"Your verification code is {code}");
             await smtpClient.SendMailAsync(mailMessage);
         }
 
         public async Task SendPasswordResetEmail(string toEmail, string resetUrl)
         {
-            // Construct the SMTP client
-            var smtpClient = new SmtpClient(_configuration["EmailSettings:SMTPServer"])
-            {
-                Port = int.Parse(_configuration["EmailSettings:Port"]),
-                Credentials = new NetworkCredential(_configuration["EmailSettings:Login"], _configuration["EmailSettings:Password"]),
-                EnableSsl = true,
-            };
-
-            // Construct the email message
-            var mailMessage = new MailMessage
-            {
-                From = new MailAddress(_configuration["EmailSettings:FromEmail"]),
-                Subject = "Password Reset Request",
-                Body = $"Please reset your password using the following link: <a href='{resetUrl}'>Reset Password</a>",
-                IsBodyHtml = true,
-            };
-            mailMessage.To.Add(toEmail);
-
-            // Send the email
+            var smtpClient = GetSmtpClient();
+            var mailMessage = CreateMailMessage(toEmail, "Password Reset Request", $"Please reset your password using this link: <a href='{resetUrl}'>Reset Password</a>");
             await smtpClient.SendMailAsync(mailMessage);
         }
-
 
         public async Task SendRegistrationConfirmationEmail(string toEmail)
         {
-            var smtpClient = new SmtpClient(_configuration["EmailSettings:SMTPServer"])
-            {
-                Port = int.Parse(_configuration["EmailSettings:Port"]),
-                Credentials = new NetworkCredential(_configuration["EmailSettings:Login"], _configuration["EmailSettings:Password"]),
-                EnableSsl = true,
-            };
-
-            var mailMessage = new MailMessage
-            {
-                From = new MailAddress(_configuration["EmailSettings:FromEmail"]),
-                Subject = "Registration Successful",
-                Body = "You have been registered to the system successfully.",
-                IsBodyHtml = true,
-            };
-            mailMessage.To.Add(toEmail);
-
+            var smtpClient = GetSmtpClient();
+            var mailMessage = CreateMailMessage(toEmail, "Registration Successful", "You have successfully registered to the system.");
             await smtpClient.SendMailAsync(mailMessage);
         }
-        // New method for sending task reassignment email notification
+
         public async Task SendTaskReassignmentEmail(string toEmail, string taskName, string reassignedBy)
         {
-            var smtpClient = new SmtpClient(_configuration["EmailSettings:SMTPServer"])
-            {
-                Port = int.Parse(_configuration["EmailSettings:Port"]),
-                Credentials = new NetworkCredential(_configuration["EmailSettings:Login"], _configuration["EmailSettings:Password"]),
-                EnableSsl = true,
-            };
-
-            var mailMessage = new MailMessage
-            {
-                From = new MailAddress(_configuration["EmailSettings:FromEmail"]),
-                Subject = "Task Reassigned",
-                Body = $"The task '{taskName}' has been reassigned to you by {reassignedBy}.",
-                IsBodyHtml = true,
-            };
-            mailMessage.To.Add(toEmail);
-
+            var smtpClient = GetSmtpClient();
+            var mailMessage = CreateMailMessage(toEmail, "Task Reassigned", $"The task '{taskName}' has been reassigned to you by {reassignedBy}.");
             await smtpClient.SendMailAsync(mailMessage);
         }
-
 
         public async Task SendGenericEmail(string toEmail, string subject, string body)
         {
-            var smtpClient = new SmtpClient(_configuration["EmailSettings:SMTPServer"])
-            {
-                Port = int.Parse(_configuration["EmailSettings:Port"]),
-                Credentials = new NetworkCredential(_configuration["EmailSettings:Login"], _configuration["EmailSettings:Password"]),
-                EnableSsl = true,
-            };
-
-            var mailMessage = new MailMessage
-            {
-                From = new MailAddress(_configuration["EmailSettings:FromEmail"]),
-                Subject = subject,
-                Body = body,
-                IsBodyHtml = true,
-            };
-            mailMessage.To.Add(toEmail);
-
+            var smtpClient = GetSmtpClient();
+            var mailMessage = CreateMailMessage(toEmail, subject, body);
             await smtpClient.SendMailAsync(mailMessage);
         }
     }

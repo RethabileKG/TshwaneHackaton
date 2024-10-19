@@ -47,7 +47,7 @@ namespace Team_12.DBContext
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Booking - User (One-to-Many)
+            // Booking - client (One-to-Many)
             modelBuilder.Entity<Booking>()
                 .HasOne(b => b.User)
                 .WithMany() // Assuming a user can book multiple facilities

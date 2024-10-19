@@ -11,6 +11,7 @@ using Team_12.Models;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore;
+using Team_12.Repositories;
 
 namespace Team_12.Controllers
 {
@@ -75,8 +76,6 @@ namespace Team_12.Controllers
             return BadRequest(ModelState);
         }
 
-
-
         // POST: api/authentication/login
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] Login model)
@@ -105,7 +104,7 @@ namespace Team_12.Controllers
     {
         new Claim(JwtRegisteredClaimNames.Sub, user.Email),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-        new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
+        new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.Now.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
         new Claim(ClaimTypes.NameIdentifier, user.Id),
         new Claim("FirstName", user.Name),
         new Claim("LastName", user.Surname),
