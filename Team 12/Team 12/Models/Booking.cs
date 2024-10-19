@@ -8,6 +8,8 @@ namespace Team_12.Models
         public int BookingId { get; set; }
         public int FacilityId { get; set; }
         public Facility Facility { get; set; }
+        public int? EventId { get; set; }  // New property
+        public Event Event { get; set; }   // New navigation property
         public DateTime BookingDate { get; set; }
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
@@ -19,15 +21,9 @@ namespace Team_12.Models
         public List<string> ClientTypes { get; set; }
         public string Status { get; set; }
         public bool IsFreeBooking { get; set; }
-        public string QRCode { get; set; } // New property for storing the QR code
-
+        public string QRCode { get; set; }
         public bool IsUsed { get; set; }
         public DateTime? UsedDateTime { get; set; }
-
-        // Navigation property
-        public virtual ICollection<Booking> Bookings { get; set; }
-
-        // Navigation property for loyalty
         public virtual UserLoyalty UserLoyalty { get; set; }
     }
 }

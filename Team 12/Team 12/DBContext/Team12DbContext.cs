@@ -19,6 +19,7 @@ namespace Team_12.DBContext
         public DbSet<ClientType> ClientTypes { get; set; }
         public DbSet<UserLoyalty> UserLoyalties { get; set; }
         public DbSet<QRVerificationModel> QRVerifications { get; set; }
+        public DbSet<Event> Events { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -37,12 +38,12 @@ namespace Team_12.DBContext
                 .HasForeignKey(r => r.FacilityId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Facility - Booking (One-to-Many)
+            // Facility - Booking (One-to-Many) - Changed to Restrict
             modelBuilder.Entity<Facility>()
                 .HasMany(f => f.Bookings)
                 .WithOne(b => b.Facility)
                 .HasForeignKey(b => b.FacilityId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict); // Changed from Cascade
 
             // Rating - User (One-to-Many)
             modelBuilder.Entity<Rating>()
@@ -56,6 +57,19 @@ namespace Team_12.DBContext
                 .HasOne(b => b.User)
                 .WithMany()
                 .HasForeignKey(b => b.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Event - Booking (One-to-Many)
+            modelBuilder.Entity<Booking>()
+                .HasOne(b => b.Event)
+                .WithMany(e => e.Bookings)
+                .HasForeignKey(b => b.EventId)
+                .OnDelete(DeleteBehavior.Restrict); // Added explicit Restrict
+
+            modelBuilder.Entity<Event>()
+                .HasOne(e => e.Facility)
+                .WithMany()
+                .HasForeignKey(e => e.FacilityId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Configure QRVerificationModel with composite key
