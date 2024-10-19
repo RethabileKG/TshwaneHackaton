@@ -7,6 +7,7 @@
         public string Description { get; set; } // Brief description of the facility
         public string Type { get; set; }    // Type (e.g., Museum, Park, Community Hall)
         public decimal PricePerHour { get; set; } // Pricing for booking (per hour)
+        public bool IsNoCostFacility { get; set; } // New property to indicate free facility
         public int Capacity { get; set; }   // Maximum people allowed
         public bool IsAvailable { get; set; }  // Availability status
         public string Address { get; set; }    // Facility address
@@ -17,4 +18,5 @@
         public ICollection<Booking> Bookings { get; set; }  // One-to-many relationship to bookings
         public ICollection<Rating> Ratings { get; set; }    // One-to-many relationship to ratings
     }
+
 }

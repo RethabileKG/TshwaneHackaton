@@ -12,8 +12,8 @@ using Team_12.DBContext;
 namespace Team_12.Migrations
 {
     [DbContext(typeof(Team12DbContext))]
-    [Migration("20241019021941_Initial")]
-    partial class Initial
+    [Migration("20241019083145_TVH2024")]
+    partial class TVH2024
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -250,31 +250,85 @@ namespace Team_12.Migrations
                     b.Property<DateTime>("BookingDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("BookingId1")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ClientTypes")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("DiscountApplied")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<TimeSpan>("EndTime")
                         .HasColumnType("time");
 
                     b.Property<int>("FacilityId")
                         .HasColumnType("int");
 
+                    b.Property<decimal>("FinalPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("IsFreeBooking")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("QRCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<TimeSpan>("StartTime")
                         .HasColumnType("time");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("TotalCost")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UsedDateTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int>("UserLoyaltyId")
+                        .HasColumnType("int");
+
                     b.HasKey("BookingId");
 
                     b.HasIndex("ApplicationUserId");
+
+                    b.HasIndex("BookingId1");
 
                     b.HasIndex("FacilityId");
 
                     b.HasIndex("UserId");
 
+                    b.HasIndex("UserLoyaltyId");
+
                     b.ToTable("Bookings");
+                });
+
+            modelBuilder.Entity("Team_12.Models.ClientType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("TypeName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ClientTypes");
                 });
 
             modelBuilder.Entity("Team_12.Models.Facility", b =>
@@ -325,6 +379,30 @@ namespace Team_12.Migrations
                     b.ToTable("Facilities");
                 });
 
+            modelBuilder.Entity("Team_12.Models.QRVerificationModel", b =>
+                {
+                    b.Property<int>("BookingId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FacilityId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("BookingDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("bit");
+
+                    b.HasKey("BookingId", "FacilityId");
+
+                    b.HasIndex("BookingId")
+                        .IsUnique();
+
+                    b.HasIndex("FacilityId");
+
+                    b.ToTable("QRVerifications");
+                });
+
             modelBuilder.Entity("Team_12.Models.Rating", b =>
                 {
                     b.Property<int>("RatingId")
@@ -362,6 +440,31 @@ namespace Team_12.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Ratings");
+                });
+
+            modelBuilder.Entity("UserLoyalty", b =>
+                {
+                    b.Property<int>("UserLoyaltyId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserLoyaltyId"), 1L, 1);
+
+                    b.Property<DateTime>("LastUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("UserLoyaltyId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserLoyalties");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -421,6 +524,10 @@ namespace Team_12.Migrations
                         .WithMany("Bookings")
                         .HasForeignKey("ApplicationUserId");
 
+                    b.HasOne("Team_12.Models.Booking", null)
+                        .WithMany("Bookings")
+                        .HasForeignKey("BookingId1");
+
                     b.HasOne("Team_12.Models.Facility", "Facility")
                         .WithMany("Bookings")
                         .HasForeignKey("FacilityId")
@@ -433,9 +540,36 @@ namespace Team_12.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("UserLoyalty", "UserLoyalty")
+                        .WithMany()
+                        .HasForeignKey("UserLoyaltyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Facility");
 
                     b.Navigation("User");
+
+                    b.Navigation("UserLoyalty");
+                });
+
+            modelBuilder.Entity("Team_12.Models.QRVerificationModel", b =>
+                {
+                    b.HasOne("Team_12.Models.Booking", "Booking")
+                        .WithOne()
+                        .HasForeignKey("Team_12.Models.QRVerificationModel", "BookingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Team_12.Models.Facility", "Facility")
+                        .WithMany()
+                        .HasForeignKey("FacilityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("Facility");
                 });
 
             modelBuilder.Entity("Team_12.Models.Rating", b =>
@@ -461,11 +595,27 @@ namespace Team_12.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("UserLoyalty", b =>
+                {
+                    b.HasOne("Team_12.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Team_12.Models.ApplicationUser", b =>
                 {
                     b.Navigation("Bookings");
 
                     b.Navigation("Ratings");
+                });
+
+            modelBuilder.Entity("Team_12.Models.Booking", b =>
+                {
+                    b.Navigation("Bookings");
                 });
 
             modelBuilder.Entity("Team_12.Models.Facility", b =>

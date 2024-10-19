@@ -1,5 +1,3 @@
-
-
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
@@ -12,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Team_12.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,15 +26,23 @@ builder.Services.AddCors(options =>
     });
 });
 
-
 // Add services to the container.
-
 // Configure controllers and JSON options
 builder.Services.AddControllers().AddJsonOptions(x =>
     x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
 // Register email service
 builder.Services.AddTransient<IEmailService, EmailService>();
+
+// Register the PayFastService
+builder.Services.AddScoped<PayFastService>();
+
+// Register the BookingRepository and IBookingRepository
+builder.Services.AddScoped<IBookingRepository, BookingRepository>();
+
+builder.Services.AddScoped<IQRVerificationService, QRVerificationService>();
+
+// Hangfire configuration
 builder.Services.AddHangfire(config =>
     config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
           .UseSimpleAssemblyNameTypeSerializer()
@@ -60,7 +67,7 @@ builder.Services.AddSwaggerGen(c =>
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
         Scheme = "Bearer",
-        Description = "A one time token. Example: Bearer s23sds4t5tdgfhtrtre "
+        Description = "A one-time token. Example: Bearer s23sds4t5tdgfhtrtre "
     });
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
@@ -76,12 +83,6 @@ builder.Services.AddSwaggerGen(c =>
      }
 });
 });
-
-
-
-
-
-
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -106,7 +107,6 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 
 builder.Services.Configure<DataProtectionTokenProviderOptions>(options => options.TokenLifespan = TimeSpan.FromHours(3));
 
-
 // Configure Authentication
 builder.Services.AddAuthentication(options =>
 {
@@ -124,12 +124,9 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["Tokens:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Tokens:Key"])),
     };
-
-
 });
 
 // Initialize Identity Roles when the API loads
-
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
