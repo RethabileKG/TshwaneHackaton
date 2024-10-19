@@ -1,5 +1,3 @@
-
-
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
@@ -12,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Team_12.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +28,9 @@ builder.Services.AddCors(options =>
 
 
 // Add services to the container.
+
+// Register IFacilityRepository
+builder.Services.AddScoped<IFacilityRepository, FacilityRepository>();
 
 // Configure controllers and JSON options
 builder.Services.AddControllers().AddJsonOptions(x =>
