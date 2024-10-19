@@ -52,7 +52,6 @@ namespace Team_12.Controllers
 
 
         // PUT: api/usermanagement/profile
-        [Authorize]
         [HttpPut("profile")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfile model)
         {
@@ -82,7 +81,6 @@ namespace Team_12.Controllers
 
 
         // PUT: api/usermanagement/admin/profile/{userId}
-        [Authorize(Roles = "Admin")] // Only admins can access this endpoint
         [HttpPut("admin/profile/{userId}")]
         public async Task<IActionResult> AdminUpdateProfile(string userId, [FromBody] UpdateProfile model)
         {
@@ -108,7 +106,6 @@ namespace Team_12.Controllers
         }
 
         // GET: api/usermanagement/all-profiles
-        [Authorize(Roles = "Admin")]
         [HttpGet("all-profiles")]
         public async Task<IActionResult> GetAllProfiles()
         {
@@ -135,7 +132,6 @@ namespace Team_12.Controllers
         }
 
         // GET: api/usermanagement/roles
-        [Authorize(Roles = "Admin")]
         [HttpGet("roles")]
         public IActionResult GetAllRoles()
         {
@@ -150,7 +146,61 @@ namespace Team_12.Controllers
             var roles = User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToList();
             return Ok(roles);
         }
+        // GET: api/usermanagement/clients
+        [HttpGet("clients")]
+        public async Task<IActionResult> GetAllClients()
+        {
+            var users = _userManager.Users.ToList();
+            var clientProfiles = new List<object>();
 
-    
+            foreach (var user in users)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                if (roles.Contains("Client"))
+                {
+                    clientProfiles.Add(new
+                    {
+                        user.Id,
+                        user.Name,
+                        user.Surname,
+                        user.Email,
+                        user.PhoneNumber,
+                        user.Birthday,
+                        Roles = roles
+                    });
+                }
+            }
+
+            return Ok(clientProfiles);
+        }
+
+        // GET: api/usermanagement/admins
+        [HttpGet("admins")]
+        public async Task<IActionResult> GetAllAdmins()
+        {
+            var users = _userManager.Users.ToList();
+            var adminProfiles = new List<object>();
+
+            foreach (var user in users)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                if (roles.Contains("Admin"))
+                {
+                    adminProfiles.Add(new
+                    {
+                        user.Id,
+                        user.Name,
+                        user.Surname,
+                        user.Email,
+                        user.PhoneNumber,
+                        user.Birthday,
+                        Roles = roles
+                    });
+                }
+            }
+
+            return Ok(adminProfiles);
+        }
+
     }
 }

@@ -75,6 +75,7 @@ namespace Team_12.Migrations
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Type = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PricePerHour = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    IsNoCostFacility = table.Column<bool>(type: "bit", nullable: false),
                     Capacity = table.Column<int>(type: "int", nullable: false),
                     IsAvailable = table.Column<bool>(type: "bit", nullable: false),
                     Address = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -215,6 +216,32 @@ namespace Team_12.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Events",
+                columns: table => new
+                {
+                    EventId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FacilityId = table.Column<int>(type: "int", nullable: false),
+                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EventPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Capacity = table.Column<int>(type: "int", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Events", x => x.EventId);
+                    table.ForeignKey(
+                        name: "FK_Events_Facilities_FacilityId",
+                        column: x => x.FacilityId,
+                        principalTable: "Facilities",
+                        principalColumn: "FacilityId",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Ratings",
                 columns: table => new
                 {
@@ -256,6 +283,7 @@ namespace Team_12.Migrations
                     BookingId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     FacilityId = table.Column<int>(type: "int", nullable: false),
+                    EventId = table.Column<int>(type: "int", nullable: false),
                     BookingDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     StartTime = table.Column<TimeSpan>(type: "time", nullable: false),
                     EndTime = table.Column<TimeSpan>(type: "time", nullable: false),
@@ -270,8 +298,7 @@ namespace Team_12.Migrations
                     IsUsed = table.Column<bool>(type: "bit", nullable: false),
                     UsedDateTime = table.Column<DateTime>(type: "datetime2", nullable: true),
                     UserLoyaltyId = table.Column<int>(type: "int", nullable: false),
-                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    BookingId1 = table.Column<int>(type: "int", nullable: true)
+                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -288,16 +315,17 @@ namespace Team_12.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Bookings_Bookings_BookingId1",
-                        column: x => x.BookingId1,
-                        principalTable: "Bookings",
-                        principalColumn: "BookingId");
+                        name: "FK_Bookings_Events_EventId",
+                        column: x => x.EventId,
+                        principalTable: "Events",
+                        principalColumn: "EventId",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Bookings_Facilities_FacilityId",
                         column: x => x.FacilityId,
                         principalTable: "Facilities",
                         principalColumn: "FacilityId",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Bookings_UserLoyalties_UserLoyaltyId",
                         column: x => x.UserLoyaltyId,
@@ -377,9 +405,9 @@ namespace Team_12.Migrations
                 column: "ApplicationUserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Bookings_BookingId1",
+                name: "IX_Bookings_EventId",
                 table: "Bookings",
-                column: "BookingId1");
+                column: "EventId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Bookings_FacilityId",
@@ -395,6 +423,11 @@ namespace Team_12.Migrations
                 name: "IX_Bookings_UserLoyaltyId",
                 table: "Bookings",
                 column: "UserLoyaltyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Events_FacilityId",
+                table: "Events",
+                column: "FacilityId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_QRVerifications_BookingId",
@@ -461,10 +494,13 @@ namespace Team_12.Migrations
                 name: "Bookings");
 
             migrationBuilder.DropTable(
-                name: "Facilities");
+                name: "Events");
 
             migrationBuilder.DropTable(
                 name: "UserLoyalties");
+
+            migrationBuilder.DropTable(
+                name: "Facilities");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
