@@ -27,6 +27,10 @@ builder.Services.AddCors(options =>
 });
 
 // Add services to the container.
+
+// Register IFacilityRepository
+builder.Services.AddScoped<IFacilityRepository, FacilityRepository>();
+
 // Configure controllers and JSON options
 builder.Services.AddControllers().AddJsonOptions(x =>
     x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
