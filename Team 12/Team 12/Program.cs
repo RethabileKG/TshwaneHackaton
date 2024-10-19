@@ -26,6 +26,7 @@ builder.Services.AddCors(options =>
     });
 });
 
+
 // Add services to the container.
 builder.Services.AddScoped<DiscountService>();
 
@@ -76,7 +77,7 @@ builder.Services.AddSwaggerGen(c =>
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
         Scheme = "Bearer",
-        Description = "A one-time token. Example: Bearer s23sds4t5tdgfhtrtre "
+        Description = "A one time token. Example: Bearer s23sds4t5tdgfhtrtre "
     });
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
@@ -92,6 +93,12 @@ builder.Services.AddSwaggerGen(c =>
      }
 });
 });
+
+
+
+
+
+
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -116,6 +123,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 
 builder.Services.Configure<DataProtectionTokenProviderOptions>(options => options.TokenLifespan = TimeSpan.FromHours(3));
 
+
 // Configure Authentication
 builder.Services.AddAuthentication(options =>
 {
@@ -133,9 +141,12 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["Tokens:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Tokens:Key"])),
     };
+
+
 });
 
 // Initialize Identity Roles when the API loads
+
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {

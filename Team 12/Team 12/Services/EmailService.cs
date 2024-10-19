@@ -11,6 +11,7 @@ namespace Team_12.Services
         Task SendVerificationEmail(string toEmail, string code);
         Task SendPasswordResetEmail(string toEmail, string token);
         Task SendRegistrationConfirmationEmail(string toEmail);
+        Task SendTaskReassignmentEmail(string toEmail, string taskName, string reassignedBy);
         Task SendGenericEmail(string toEmail, string subject, string body);
         Task SendBookingConfirmationEmail(string toEmail, string facilityName, DateTime bookingDate, string bookingId, string qrContent);
         Task SendPaymentConfirmationEmail(string toEmail, string bookingReference, decimal amount);
@@ -87,7 +88,7 @@ namespace Team_12.Services
             await smtpClient.SendMailAsync(mailMessage);
         }
 
-        public async Task SendGenericEmail(string toEmail, string subject, string body)
+        public async Task SendVerificationEmail(string toEmail, string code)
         {
             var smtpClient = GetSmtpClient();
             var mailMessage = CreateMailMessage(toEmail, subject, body);
