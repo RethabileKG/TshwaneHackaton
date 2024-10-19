@@ -88,7 +88,10 @@ namespace Team_12.Services
             await smtpClient.SendMailAsync(mailMessage);
         }
 
-        public async Task SendGenericEmail(string toEmail, string subject, string body)
+            await smtpClient.SendMailAsync(mailMessage);
+        }
+
+        public async Task SendBookingCancellationEmail(string toEmail, string facilityName, DateTime bookingDate)
         {
             var smtpClient = GetSmtpClient();
             var mailMessage = CreateMailMessage(toEmail, subject, body);
