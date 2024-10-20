@@ -11,6 +11,7 @@ using Team_12.Models;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace Team_12.Controllers
 {
@@ -61,8 +62,8 @@ namespace Team_12.Controllers
             var result = await _userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
-                var role = model.Role ?? "Non_Admin"; // Default role if none is provided
-                await _userManager.AddToRoleAsync(user, role); // Assign the user to the role
+                // Always assign "Client" role to regular registrations
+                await _userManager.AddToRoleAsync(user, "Client");
 
                 await _emailService.SendRegistrationConfirmationEmail(user.Email);
                 return Ok(new { Message = "User registered successfully." });
@@ -73,6 +74,54 @@ namespace Team_12.Controllers
                 ModelState.AddModelError(string.Empty, error.Description);
             }
             return BadRequest(ModelState);
+        }
+
+        [HttpPost("register-admin")]
+        public async Task<IActionResult> RegisterAdmin([FromBody] AdminRegisterModel model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // Generate random password
+            string temporaryPassword = GenerateRandomPassword(12);
+
+            var user = new ApplicationUser
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                Name = model.Name,
+                Surname = model.Surname,
+                PhoneNumber = model.PhoneNumber
+            };
+
+            var result = await _userManager.CreateAsync(user, temporaryPassword);
+            if (result.Succeeded)
+            {
+                await _userManager.AddToRoleAsync(user, "Admin");
+
+                // Send welcome email with temporary password
+                await _emailService.SendAdminRegistrationEmail(
+                    model.Email,
+                    $"{model.Name} {model.Surname}",
+                    temporaryPassword
+                );
+
+                return Ok(new { Message = "Admin registered successfully." });
+            }
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+            return BadRequest(ModelState);
+        }
+
+        private string GenerateRandomPassword(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+            var random = new Random();
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
 
@@ -219,5 +268,21 @@ namespace Team_12.Controllers
             return Ok(usersWithRoles);
         }
 
+    }
+
+    public class AdminRegisterModel
+    {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email address")]
+        public string Email { get; set; }
+
+        [Required(ErrorMessage = "Name is required")]
+        public string Name { get; set; }
+
+        [Required(ErrorMessage = "Surname is required")]
+        public string Surname { get; set; }
+
+        [Required(ErrorMessage = "Phone number is required")]
+        public string PhoneNumber { get; set; }
     }
 }

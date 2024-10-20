@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
+using Team_12.DTOs;
 using Team_12.Models;
 using Team_12.Repositories;
 using Team_12.Services;
@@ -14,38 +16,84 @@ namespace Team_12.Controllers
         private readonly IBookingRepository _bookingRepository;
         private readonly DiscountService _discountService;
         private readonly IEmailService _emailService;
+        private readonly IEventRepository _eventRepository;
         private readonly PayFastService _payFastService;
-        private readonly QRVerificationService _qrVerificationService;
+        private readonly IQRVerificationService _qrVerificationService;
+        private readonly IFacilityRepository _facilityRepository;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public BookingController(IBookingRepository bookingRepository, DiscountService discountService, IEmailService emailService, PayFastService payFastService, QRVerificationService qrVerificationService)
+        public BookingController(IBookingRepository bookingRepository, DiscountService discountService, IEmailService emailService, PayFastService payFastService, IQRVerificationService qrVerificationService, IFacilityRepository facilityRepository, IEventRepository eventRepository, UserManager<ApplicationUser> userManager)
         {
             _bookingRepository = bookingRepository;
             _discountService = discountService;
             _emailService = emailService;
             _payFastService = payFastService;
             _qrVerificationService = qrVerificationService;
+            _facilityRepository = facilityRepository;
+            _eventRepository = eventRepository;
+            _userManager = userManager;
         }
 
         // Create a new booking
-        [HttpPost("book")]
-        public async Task<IActionResult> CreateBooking([FromBody] BookingRequest request)
+   [HttpPost("book")]
+        public async Task<ActionResult<BookingResponseDto>> CreateBooking([FromBody] BookingRequestDto request)
         {
-            // Check facility availability
-            var isAvailable = await _bookingRepository.IsFacilityAvailable(request.FacilityId, request.BookingDate, request.StartTime, request.EndTime);
-            if (!isAvailable)
+            decimal totalCost = 0;
+            decimal discount = 0;
+            decimal finalPrice = 0;
+
+            // Validate facility/event availability as before
+            if (request.EventId.HasValue)
             {
-                return BadRequest("Facility is fully booked.");
+                var eventModel = await _eventRepository.GetEventById(request.EventId.Value);
+                if (eventModel == null)
+                {
+                    return NotFound("Event not found.");
+                }
+
+                if (DateTime.Now > eventModel.EndDate)
+                {
+                    return BadRequest("This event has already passed.");
+                }
+
+                totalCost = eventModel.EventPrice * request.Attendees.Count;
+            }
+            else
+            {
+                var facility = await _facilityRepository.GetFacilityByIdAsync(request.FacilityId);
+                if (facility == null)
+                {
+                    return NotFound("Facility not found.");
+                }
+
+                var isAvailable = await _bookingRepository.IsFacilityAvailable(
+                    request.FacilityId,
+                    request.BookingDate,
+                    request.StartTime,
+                    request.EndTime);
+
+                if (!isAvailable)
+                {
+                    return BadRequest("Facility is fully booked.");
+                }
+
+                totalCost = facility.IsNoCostFacility ? 0 :
+                           CalculateTotalCost(facility.PricePerHour, request.StartTime, request.EndTime) *
+                           request.Attendees.Count;
             }
 
-            // Calculate total cost and apply discounts
-            var totalCost = request.TotalCost;
-            var discount = _discountService.CalculateDiscount(request.ClientTypes, totalCost);
-            var finalPrice = totalCost - discount;
+            if (totalCost > 0)
+            {
+                // Calculate discount based on all attendees' client types
+                var clientTypes = request.Attendees.Select(a => a.ClientType).ToList();
+                discount = _discountService.CalculateDiscount(clientTypes, totalCost);
+                finalPrice = totalCost - discount;
+            }
 
-            // Create booking
             var booking = new Booking
             {
                 FacilityId = request.FacilityId,
+                EventId = request.EventId,
                 UserId = request.UserId,
                 BookingDate = request.BookingDate,
                 StartTime = request.StartTime,
@@ -53,29 +101,60 @@ namespace Team_12.Controllers
                 TotalCost = totalCost,
                 DiscountApplied = discount,
                 FinalPrice = finalPrice,
-                ClientTypes = request.ClientTypes,
-                Status = "Pending"
+                Status = "Pending",
+                Attendees = request.Attendees.Select(a => new Attendee
+                {
+                    Name = a.Name,
+                    ClientType = a.ClientType,
+                    PhoneNumber = a.PhoneNumber
+                }).ToList(),
+                ClientTypes = request.Attendees.Select(a => a.ClientType).Distinct().ToList(),
+                IsUsed = false,
+                Facility = await _facilityRepository.GetFacilityByIdAsync(request.FacilityId)
             };
 
             var createdBooking = await _bookingRepository.CreateBooking(booking);
 
-            // Generate QR code content using the QR verification service
-            var qrContent = _qrVerificationService.GenerateQRContent(createdBooking);
+            // Generate QR code content
+            string qrContent = _qrVerificationService.GenerateQRContent(createdBooking);
 
-            // Send booking confirmation email with QR code
-            await _emailService.SendBookingConfirmationEmail(
-                request.UserEmail,
-                createdBooking.Facility.Name,
-                createdBooking.BookingDate,
-                createdBooking.BookingId.ToString(),
-                qrContent
-            );
+            // Update the booking with the QR code content
+            createdBooking.QRCode = qrContent;
+            await _bookingRepository.UpdateBooking(createdBooking);
 
-            // Generate PayFast payment URL
-            var paymentUrl = _payFastService.GeneratePaymentUrl(finalPrice, createdBooking.BookingId.ToString());
+            // Use the email from the first attendee instead of the user's email
+            // Use the user's email from the User entity
+            //await _emailService.SendBookingConfirmationEmail(
+      
+            //    createdBooking.Facility.Name,
+            //    createdBooking.BookingDate,
+            //    createdBooking.BookingId.ToString(),
+            //    qrContent
+            //);
+            var response = new BookingResponseDto
+            {
+                BookingId = createdBooking.BookingId,
+                Status = createdBooking.Status,
+                TotalCost = totalCost,
+                DiscountApplied = discount,
+                FinalPrice = finalPrice
+            };
 
-            return Ok(new { bookingId = createdBooking.BookingId, paymentUrl });
+            if (finalPrice > 0)
+            {
+                response.PaymentUrl = _payFastService.GeneratePaymentUrl(finalPrice, createdBooking.BookingId.ToString());
+            }
+
+            return Ok(response);
         }
+
+        private decimal CalculateTotalCost(decimal pricePerHour, TimeSpan startTime, TimeSpan endTime)
+        {
+            var duration = endTime - startTime;
+            return pricePerHour * (decimal)duration.TotalHours;
+        }
+
+
 
         // Get all bookings
         [HttpGet("all")]

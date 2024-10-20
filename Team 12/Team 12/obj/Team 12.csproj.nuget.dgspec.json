@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Jodi-Leigh Smuts\\Hackathon_API\\Team 12\\Team 12\\Team 12.csproj": {}
+    "C:\\Users\\Jodi-Leigh Smuts\\Hackathon_API2\\Hackathon_API\\Team 12\\Team 12\\Team 12.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Jodi-Leigh Smuts\\Hackathon_API\\Team 12\\Team 12\\Team 12.csproj": {
+    "C:\\Users\\Jodi-Leigh Smuts\\Hackathon_API2\\Hackathon_API\\Team 12\\Team 12\\Team 12.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Jodi-Leigh Smuts\\Hackathon_API\\Team 12\\Team 12\\Team 12.csproj",
+        "projectUniqueName": "C:\\Users\\Jodi-Leigh Smuts\\Hackathon_API2\\Hackathon_API\\Team 12\\Team 12\\Team 12.csproj",
         "projectName": "Team 12",
-        "projectPath": "C:\\Users\\Jodi-Leigh Smuts\\Hackathon_API\\Team 12\\Team 12\\Team 12.csproj",
+        "projectPath": "C:\\Users\\Jodi-Leigh Smuts\\Hackathon_API2\\Hackathon_API\\Team 12\\Team 12\\Team 12.csproj",
         "packagesPath": "C:\\Users\\Jodi-Leigh Smuts\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Jodi-Leigh Smuts\\Hackathon_API\\Team 12\\Team 12\\obj\\",
+        "outputPath": "C:\\Users\\Jodi-Leigh Smuts\\Hackathon_API2\\Hackathon_API\\Team 12\\Team 12\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Jodi-Leigh Smuts\\AppData\\Roaming\\NuGet\\NuGet.Config",

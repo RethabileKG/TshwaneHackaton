@@ -27,6 +27,7 @@ builder.Services.AddCors(options =>
 });
 
 // Add services to the container.
+builder.Services.AddScoped<DiscountService>();
 
 // Register IFacilityRepository
 builder.Services.AddScoped<IFacilityRepository, FacilityRepository>();
@@ -40,6 +41,10 @@ builder.Services.AddTransient<IEmailService, EmailService>();
 
 // Register the PayFastService
 builder.Services.AddScoped<PayFastService>();
+
+builder.Services.AddScoped<IEventRepository, EventRepository>();
+
+builder.Services.AddHostedService<EventExpirationService>();
 
 // Register the BookingRepository and IBookingRepository
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
