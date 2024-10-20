@@ -39,6 +39,7 @@ builder.Services.AddControllers().AddJsonOptions(x =>
 // Register email service
 builder.Services.AddTransient<IEmailService, EmailService>();
 
+
 // Register the PayFastService
 builder.Services.AddScoped<PayFastService>();
 
@@ -52,6 +53,7 @@ builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 builder.Services.AddScoped<IQRVerificationService, QRVerificationService>();
 
 // Hangfire configuration
+
 builder.Services.AddHangfire(config =>
     config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
           .UseSimpleAssemblyNameTypeSerializer()

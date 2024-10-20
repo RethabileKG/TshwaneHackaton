@@ -5,6 +5,7 @@ using Team_12.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Security.Claims;
 
 namespace Team_12.Controllers
 {
@@ -121,3 +122,4 @@ namespace Team_12.Controllers
         }
     }
 }
+
